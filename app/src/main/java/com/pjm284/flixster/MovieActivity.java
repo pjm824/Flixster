@@ -2,12 +2,14 @@ package com.pjm284.flixster;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DividerItemDecoration;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.widget.ListView;
 
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.JsonHttpResponseHandler;
-import com.pjm284.flixster.adapters.MovieArrayAdapter;
+import com.pjm284.flixster.adapters.MovieAdapter;
 import com.pjm284.flixster.models.Movie;
 
 import org.json.JSONArray;
@@ -21,18 +23,26 @@ import cz.msebera.android.httpclient.Header;
 public class MovieActivity extends AppCompatActivity {
 
     ArrayList<Movie> movies;
-    MovieArrayAdapter movieAdapter;
-    ListView lvMovies;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_movie);
 
-        lvMovies = (ListView) findViewById(R.id.lvMovies);
         movies = new ArrayList<>();
-        movieAdapter = new MovieArrayAdapter(this, movies);
-        lvMovies.setAdapter(movieAdapter);
+
+        RecyclerView rvMovies = (RecyclerView) findViewById(R.id.rvMovies);
+
+        // add divider between items in recycler view
+        RecyclerView.ItemDecoration itemDecoration = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
+        rvMovies.addItemDecoration(itemDecoration);
+
+        // set up MovieAdapter and hook it up to the recycler view
+        final MovieAdapter adapter = new MovieAdapter(this, movies);
+        rvMovies.setAdapter(adapter);
+        rvMovies.setLayoutManager(new LinearLayoutManager(this));
+
+        // get data from api
         String url = "https://api.themoviedb.org/3/movie/now_playing?api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed";
         AsyncHttpClient client = new AsyncHttpClient();
         client.get(url, new JsonHttpResponseHandler(){
@@ -41,7 +51,7 @@ public class MovieActivity extends AppCompatActivity {
                 try {
                     JSONArray movieJsonResults = response.getJSONArray("results");
                     movies.addAll(Movie.fromJsonArray(movieJsonResults));
-                    movieAdapter.notifyDataSetChanged();
+                    adapter.notifyDataSetChanged();
                     Log.d("DEBUG", movieJsonResults.toString());
                 } catch (JSONException e) {
                     e.printStackTrace();
